@@ -168,71 +168,75 @@ WHERE (COALESCE(kn.verte, 0) > 50 OR
     COALESCE(kn.verte, 0) = 22.50) AND
     LOWER(kn.pavadinimas) LIKE '%duomenu%';
 
-SELECT *
-FROM stud.egzempliorius AS egz
-JOIN stud.knyga AS kn
-ON egz.isbn = kn.isbn
-ORDER BY COALESCE(kn.pavadinimas, '');
-
-SELECT *
-FROM stud.egzempliorius AS egz
-RIGHT JOIN stud.knyga AS kn
-ON egz.isbn = kn.isbn
-ORDER BY COALESCE(kn.verte, 0);
-
-SELECT DISTINCT(kn.pavadinimas)
-FROM stud.egzempliorius AS egz
-JOIN stud.knyga AS kn
-ON egz.isbn = kn.isbn
-ORDER BY kn.pavadinimas;
-
-SELECT DISTINCT(kn.pavadinimas)
-FROM stud.egzempliorius AS egz
-JOIN stud.knyga AS kn
-ON egz.isbn = kn.isbn
-WHERE kn.metai = '2016'
-ORDER BY kn.pavadinimas;
-
-SELECT *
-FROM stud.egzempliorius AS egz
-JOIN stud.knyga AS kn
-ON egz.isbn = kn.isbn;
-
-SELECT egz.nr, kn.pavadinimas, kn.leidykla
-FROM stud.egzempliorius AS egz
-JOIN stud.knyga AS kn
-ON egz.isbn = kn.isbn;
-
-SELECT *
-FROM stud.egzempliorius AS egz
-JOIN stud.knyga AS kn
-ON egz.isbn = kn.isbn
-WHERE LOWER(TRIM(kn.pavadinimas)) = 'objektinis programavimas';
-
-SELECT nr, pavadinimas
-FROM stud.knyga AS kn, 
-    stud.egzempliorius AS egz
-WHERE egz.isbn = kn.isbn;
-
-SELECT egz.Nr, vardas, pavarde
-FROM stud.egzempliorius AS egz, 
-    stud.skaitytojas AS sk
-WHERE egz.skaitytojas = sk.nr;
-
-SELECT sk.pavarde, egz.nr
-FROM stud.egzempliorius egz,
-    stud.skaitytojas sk
-WHERE egz.skaitytojas = sk.nr AND
-    sk.nr = 1000;
-
-SELECT gimimas, 
-    COUNT(*)
-FROM stud.skaitytojas sk
-GROUP BY gimimas;
-
 -- ND 
+-- https://joins.spathon.com/
 -- join , =
 -- left join
 -- right join
 -- outer join
 -- table ir table
+
+-- Join/Inner Join = Keep only that which matches
+-- Left join = Keep every thing from left table, only matches from right table
+-- Right join = Keep everything from right table, only matches from left table
+-- Outer join = Keep everything
+
+SELECT *
+FROM stud.knyga AS kn,
+    stud.autorius AS au
+WHERE kn.isbn = au.isbn;
+
+SELECT kn.isbn, kn.pavadinimas, eg.nr, eg.skaitytojas
+FROM stud.knyga kn
+JOIN stud.egzempliorius eg
+ON kn.isbn = eg.isbn;
+
+SELECT kn.isbn, kn.pavadinimas, eg.nr, eg.skaitytojas
+FROM stud.knyga kn
+LEFT JOIN stud.egzempliorius eg
+ON kn.isbn = eg.isbn;
+
+SELECT kn.isbn, kn.pavadinimas, eg.nr, eg.skaitytojas
+FROM stud.knyga kn
+RIGHT JOIN stud.egzempliorius eg
+ON kn.isbn = eg.isbn;
+
+SELECT kn.isbn, kn.pavadinimas, eg.nr, eg.skaitytojas
+FROM stud.knyga kn
+FULL OUTER JOIN stud.egzempliorius eg
+ON kn.isbn = eg.isbn;
+
+SELECT kn1.isbn AS isbn1, kn1.pavadinimas AS book1,
+    kn2.isbn AS isbn2, kn2.pavadinimas AS book2
+FROM stud.knyga kn1
+JOIN stud.knyga kn2
+ON kn1.puslapiai = kn2.puslapiai AND
+    kn1.isbn <> kn2.isbn;
+
+SELECT eg.nr, eg.paimta, eg.grazinti, 
+    sk.vardas, sk.pavarde, kn.pavadinimas
+FROM stud.egzempliorius eg
+JOIN stud.knyga kn
+ON eg.isbn = kn.isbn
+JOIN stud.skaitytojas sk
+ON eg.skaitytojas = sk.nr;
+
+-- get all egzemplioriai with titles
+SELECT Nr, Pavadinimas FROM Stud.Knyga, Stud.Egzempliorius
+WHERE Stud.Egzempliorius.ISBN = Stud.Knyga.ISBN;
+
+SELECT Nr, Pavadinimas FROM Stud.Knyga, Stud.Egzempliorius
+WHERE Stud.Egzempliorius.ISBN = Stud.Knyga.ISBN
+ORDER BY Nr;
+
+SELECT Nr, Pavadinimas FROM Stud.Knyga, Stud.Egzempliorius
+WHERE Stud.Egzempliorius.ISBN = Stud.Knyga.ISBN
+ORDER BY 2 DESC;
+
+SELECT CAST(AVG(COALESCE(kn.verte, 0)) AS DECIMAL(6, 2))
+FROM stud.knyga kn
+LEFT JOIN stud.autorius au
+ON kn.isbn = au.isbn
+WHERE INITCAP(au.vardas)='Jonas' AND
+    INITCAP(au.pavarde)='Jonaitis';
+
