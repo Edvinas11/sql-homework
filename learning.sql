@@ -281,4 +281,61 @@ ON eg.skaitytojas = sk.nr
 WHERE INITCAP(au.vardas)='Jonas' AND
     INITCAP(au.pavarde)='Jonaitis';
 
+-- GROUP BY
+
+SELECT gimimas, COUNT(*)
+FROM stud.skaitytojas sk
+GROUP BY gimimas;
+
+SELECT kn.isbn, kn.pavadinimas, COUNT(*) AS Kiekis
+FROM stud.knyga kn, 
+    stud.egzempliorius eg
+WHERE eg.isbn = kn.isbn
+GROUP BY kn.isbn;
+
+SELECT kn.isbn, kn.pavadinimas, COUNT(*) AS Kiekis
+FROM stud.knyga kn, 
+    stud.egzempliorius eg
+WHERE kn.isbn = eg.isbn
+GROUP BY kn.isbn
+HAVING COUNT(*) > 2;
+
+SELECT sk.vardas, 
+    sk.pavarde,
+    eg.paimta,
+    COUNT(*) AS Paimta
+FROM stud.skaitytojas sk,
+    stud.egzempliorius eg
+WHERE sk.nr = eg.skaitytojas
+GROUP BY sk.vardas, 
+    sk.pavarde,
+    eg.paimta
+HAVING COUNT(*) > 0
+ORDER BY sk.vardas, eg.paimta;
+
+-- use GROUP BY CUBE
+-- prideda sumine eilute
+SELECT kn.leidykla,
+    CAST(SUM(COALESCE(kn.verte, 0)) AS DECIMAL(6,1))
+FROM stud.knyga kn
+GROUP BY CUBE(kn.leidykla);
+
+-- papildo suminėmis eil.
+-- pagal visas grupavimo stulpelių kombinacijas
+SELECT kn.leidykla,
+    kn.pavadinimas,
+    CAST(SUM(COALESCE(kn.verte, 0)) AS DECIMAL(6,1))
+FROM stud.knyga kn
+GROUP BY CUBE(kn.leidykla, kn.pavadinimas);
+
+-- GROUP BY ROLLUP
+-- sumos kaupiamos tik kairiau
+-- esantiems grupavimo stulpeliams
+SELECT kn.leidykla,
+    kn.pavadinimas,
+    CAST(SUM(COALESCE(kn.verte, 0)) AS DECIMAL(6,1))
+FROM stud.knyga kn
+GROUP BY ROLLUP(kn.leidykla, kn.pavadinimas);
+
+
 
