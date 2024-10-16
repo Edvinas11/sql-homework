@@ -213,6 +213,19 @@ JOIN stud.knyga kn2
 ON kn1.puslapiai = kn2.puslapiai AND
     kn1.isbn <> kn2.isbn;
 
+SELECT kn1.isbn AS isbn1, kn1.pavadinimas AS book1,
+    kn2.isbn AS isbn2, kn2.pavadinimas AS book2
+FROM stud.knyga kn1, stud.knyga kn2
+WHERE kn1.puslapiai = kn2.puslapiai AND
+    kn1.isbn != kn2.isbn;
+
+SELECT kn1.isbn AS isbn1, kn1.pavadinimas AS book1,
+    kn2.isbn AS isbn2, kn2.pavadinimas AS book2
+FROM stud.knyga kn1
+JOIN stud.knyga kn2
+ON kn1.puslapiai = kn2.puslapiai AND
+    kn1.isbn <> kn2.isbn;
+
 SELECT eg.nr, eg.paimta, eg.grazinti, 
     sk.vardas, sk.pavarde, kn.pavadinimas
 FROM stud.egzempliorius eg
@@ -221,16 +234,27 @@ ON eg.isbn = kn.isbn
 JOIN stud.skaitytojas sk
 ON eg.skaitytojas = sk.nr;
 
--- get all egzemplioriai with titles
-SELECT Nr, Pavadinimas FROM Stud.Knyga, Stud.Egzempliorius
-WHERE Stud.Egzempliorius.ISBN = Stud.Knyga.ISBN;
+SELECT eg.nr, eg.paimta, eg.grazinti, 
+    sk.vardas, sk.pavarde, kn.pavadinimas
+FROM stud.egzempliorius eg, 
+    stud.knyga kn,
+    stud.skaitytojas sk
+WHERE eg.isbn = kn.isbn 
+    AND eg.skaitytojas = sk.nr;
 
-SELECT Nr, Pavadinimas FROM Stud.Knyga, Stud.Egzempliorius
-WHERE Stud.Egzempliorius.ISBN = Stud.Knyga.ISBN
+-- get all egzemplioriai with titles
+SELECT Nr, Pavadinimas 
+FROM Stud.Knyga kn, Stud.Egzempliorius eg
+WHERE eg.isbn = kn.isbn;
+
+SELECT Nr, Pavadinimas 
+FROM Stud.Knyga kn, Stud.Egzempliorius eg
+WHERE eg.isbn = kn.isbn
 ORDER BY Nr;
 
-SELECT Nr, Pavadinimas FROM Stud.Knyga, Stud.Egzempliorius
-WHERE Stud.Egzempliorius.ISBN = Stud.Knyga.ISBN
+SELECT Nr, Pavadinimas 
+FROM Stud.Knyga kn, Stud.Egzempliorius eg
+WHERE eg.isbn = kn.isbn
 ORDER BY 2 DESC;
 
 SELECT CAST(AVG(COALESCE(kn.verte, 0)) AS DECIMAL(6, 2))
@@ -239,4 +263,22 @@ LEFT JOIN stud.autorius au
 ON kn.isbn = au.isbn
 WHERE INITCAP(au.vardas)='Jonas' AND
     INITCAP(au.pavarde)='Jonaitis';
+
+SELECT kn.isbn, 
+    au.vardas,
+    au.pavarde,
+    kn.pavadinimas,
+    eg.nr,
+    sk.vardas,
+    sk.pavarde
+FROM stud.knyga kn
+LEFT JOIN stud.autorius au
+ON kn.isbn = au.isbn
+JOIN stud.egzempliorius eg
+ON au.isbn = eg.isbn
+LEFT JOIN stud.skaitytojas sk
+ON eg.skaitytojas = sk.nr
+WHERE INITCAP(au.vardas)='Jonas' AND
+    INITCAP(au.pavarde)='Jonaitis';
+
 
