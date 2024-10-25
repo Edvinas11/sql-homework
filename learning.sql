@@ -471,12 +471,12 @@ MoteruPopuliariausiosKnygos AS (
     ORDER BY skaito DESC
     LIMIT 1
 )
-SELECT
-    (
-        SELECT pavadinimas 
-        FROM VyruPopuliariausiosKnygos
-    ) AS vyru_skaitomiausia,
-    (
-        SELECT pavadinimas 
-        FROM MoteruPopuliariausiosKnygos
-    ) AS moteru_skaitomiausia;
+SELECT 
+(
+    SELECT pavadinimas 
+    FROM VyruPopuliariausiosKnygos
+) AS vyru_skaitomiausia,
+(
+    SELECT pavadinimas 
+    FROM MoteruPopuliariausiosKnygos
+) AS moteru_skaitomiausia;
