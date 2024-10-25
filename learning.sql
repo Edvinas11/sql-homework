@@ -337,5 +337,146 @@ SELECT kn.leidykla,
 FROM stud.knyga kn
 GROUP BY ROLLUP(kn.leidykla, kn.pavadinimas);
 
+-- ###############################################
 
+-- grazina skaitytoja, jei egzistuoja
+-- bent vienas egzempliorius, kuris buvo paimtas jo
+SELECT sk.vardas, sk.pavarde
+FROM stud.skaitytojas sk
+WHERE EXISTS(
+    SELECT *
+    FROM stud.egzempliorius eg
+    WHERE sk.nr = eg.skaitytojas AND
+        eg.paimta IS NOT NULL
+);
 
+-- knygos, kuriu isleidimo metais visos kitos knygos turejo
+-- virs 300 psl.
+SELECT kn1.pavadinimas, kn1.puslapiai
+FROM stud.knyga kn1
+WHERE 300 <= ALL(
+    SELECT kn2.puslapiai
+    FROM stud.knyga kn2
+    WHERE kn2.metai = kn1.metai
+);
+
+-- knygos, kur puslapiu skaicius yra didesnis
+-- bent vienos kitos knygos tu paciu metu
+SELECT kn1.pavadinimas, kn1.puslapiai
+FROM stud.knyga kn1
+WHERE kn1.puslapiai > ANY(
+    SELECT kn2.puslapiai
+    FROM stud.knyga kn2
+    WHERE kn2.metai = kn1.metai
+);
+
+-- dienos, kai turi buti grazinta maziau egzemplioriu
+-- negu per visas grazinimo dienas vidutiniskai
+WITH Dienos AS (
+    SELECT eg.grazinti, COUNT(*) AS viso
+    FROM stud.egzempliorius eg
+    WHERE eg.grazinti IS NOT NULL
+    GROUP BY eg.grazinti
+),
+EgzemplioriuGrazinimoVidurkis AS (
+    SELECT AVG(viso) AS vidurkis
+    FROM Dienos
+)
+SELECT di.grazinti, di.viso
+FROM Dienos di, EgzemplioriuGrazinimoVidurkis vi
+WHERE di.viso < vi.vidurkis;
+
+-- visi knygu autoriu vardai, kurie sutinkami
+-- tarp knygu autoriu dazniau nei AVG
+WITH KnyguSkaiciai(Vardas, Skaicius) AS (
+    SELECT au.vardas, COUNT(au.isbn)
+    FROM stud.autorius au
+    GROUP BY au.vardas
+),
+SkaiciuVidurkis(Vidurkis) AS (
+    SELECT CAST(AVG(Skaicius) AS DECIMAL(6,2))
+    FROM KnyguSkaiciai
+)
+SELECT Vardas, Skaicius, Vidurkis
+FROM KnyguSkaiciai, SkaiciuVidurkis
+WHERE Skaicius > Vidurkis
+ORDER BY Vardas;
+
+-- Reikia isvesti skaitytoja (A) 
+-- jei egzistuoja bent 1 kitas skaitytojas 
+-- kuris skaito A skaitytojo knygas ir yra vyresnis
+WITH SkaitytojoKnygos AS (
+    SELECT sk.nr, sk.vardas, sk.pavarde, sk.gimimas, eg.isbn
+    FROM stud.skaitytojas sk, stud.egzempliorius eg
+    WHERE sk.nr = eg.skaitytojas
+),
+SenesniSkaitytojai AS (
+    SELECT sk1.nr AS skaiA, sk2.nr AS skaiB 
+    FROM SkaitytojoKnygos sk1, skaitytojoKnygos sk2
+    WHERE sk1.isbn = sk2.isbn AND
+        sk1.nr <> sk2.nr AND
+        sk2.gimimas < sk1.gimimas
+)
+SELECT DISTINCT sk.vardas, sk.pavarde, sk.gimimas
+FROM stud.skaitytojas sk
+JOIN SenesniSkaitytojai sen
+ON sk.nr = sen.skaiA;
+
+-- Reikia isvesti skaitytoja (A) 
+-- jei egzistuoja bent 1 kitas skaitytojas 
+-- kuris skaito A skaitytojo knygas ir yra vyresnis
+-- (Geresnis variantas)
+SELECT *
+FROM stud.skaitytojas sk1
+WHERE sk1.gimimas > ANY(
+    SELECT sk2.gimimas
+    FROM stud.egzempliorius eg, stud.skaitytojas sk2
+    WHERE eg.isbn IN (
+        SELECT isbn
+        FROM stud.egzempliorius
+        WHERE skaitytojas = sk1.nr
+    )
+    AND eg.skaitytojas <> sk1.nr
+    AND skaitytojas IS NOT NULL
+    AND eg.skaitytojas = sk2.nr
+);
+
+-- populiariausia moteru knyga 
+-- ir populiariausia vyru knyga
+WITH VyruPopuliariausiosKnygos AS (
+    SELECT kn.isbn,
+        kn.pavadinimas,
+        COUNT(*) AS skaito
+    FROM stud.egzempliorius eg
+    JOIN stud.knyga kn
+    ON eg.isbn = kn.isbn
+    JOIN stud.skaitytojas sk
+    ON eg.skaitytojas = sk.nr
+    WHERE sk.vardas IN ('Jonas', 'Petras', 'Tadas')
+    GROUP BY kn.pavadinimas, kn.isbn
+    ORDER BY skaito DESC
+    LIMIT 1
+),
+MoteruPopuliariausiosKnygos AS (
+    SELECT kn.isbn,
+        kn.pavadinimas,
+        COUNT(*) AS skaito
+    FROM stud.egzempliorius eg
+    JOIN stud.knyga kn
+    ON eg.isbn = kn.isbn
+    JOIN stud.skaitytojas sk
+    ON eg.skaitytojas = sk.nr
+    WHERE sk.vardas IN ('Milda', 'Onute', 'Grazina')
+    GROUP BY kn.pavadinimas, kn.isbn
+    ORDER BY skaito DESC
+    LIMIT 1
+)
+SELECT
+    (
+        SELECT pavadinimas 
+        FROM VyruPopuliariausiosKnygos
+    ) AS vyru_skaitomiausia,
+    (
+        SELECT pavadinimas 
+        FROM MoteruPopuliariausiosKnygos
+    ) AS moteru_skaitomiausia;
