@@ -480,3 +480,71 @@ SELECT
     SELECT pavadinimas 
     FROM MoteruPopuliariausiosKnygos
 ) AS moteru_skaitomiausia;
+
+-- visu DB lenteliu stulpeliu info
+SELECT *
+FROM Information_Schema.Columns;
+
+-- visos lenteles turincios daugiau uz pasirinkta skaiciu stulpeliu
+SELECT col.Table_Name,
+    COUNT(*) AS Stulpeliai
+FROM Information_Schema.Columns col
+JOIN Information_Schema.Tables tab
+ON col.Table_Schema = tab.Table_Schema
+AND col.Table_Name = tab.Table_Name
+WHERE col.Table_Schema = 'stud'
+AND tab.Table_Type = 'BASE TABLE'
+GROUP BY col.Table_Name
+HAVING COUNT(*) > 1
+ORDER BY col.Table_Name;
+
+-- information_schema.tables stulpeliu pavadinimai
+SELECT Column_name
+FROM Information_schema.Columns
+WHERE Table_schema = 'information_schema'
+AND Table_Name = 'tables';
+
+-- visi information_schema lenteliu pavadinimai
+SELECT Table_name
+FROM Information_schema.Tables
+WHERE Table_schema = 'information_schema'
+ORDER BY 1;
+
+-- visi skirtingi information_schema lenteliu pavadinimai
+SELECT DISTINCT Table_name
+FROM Information_schema.Columns
+WHERE Table_schema = 'information_schema'
+ORDER BY 1;
+
+-- visos schemos ir lenteliu pavadinimai DB
+SELECT Table_schema,
+    Table_name
+FROM Information_schema.Tables
+ORDER BY 1, 2;
+
+-- skaicius skirtingu lenteliu pagal data_type
+SELECT Data_Type,
+    COUNT(DISTINCT (Table_schema, Table_name))
+FROM Information_schema.Columns
+GROUP BY Data_Type;
+
+SELECT Data_Type
+FROM Information_schema.Columns
+WHERE Table_schema = 'pg_catalog'
+AND Table_name = 'pg_roles'
+AND Column_name = 'rolpassword';
+
+-- konkreciam naudotojui sarasas stulpeliu, kuriuos
+-- jis turi teise naudoti uzklausose
+SELECT Table_schema,
+    Table_name,
+    Column_name,
+    Privilege_type
+FROM Information_schema.Column_privileges
+WHERE Grantee = 'edbu0238'
+ORDER BY Table_schema, Table_name, Column_name;
+
+SELECT column_name
+FROM Information_schema.Key_column_usage
+WHERE Table_schema = 'stud'
+AND Table_Name = 'skaitytojas';
