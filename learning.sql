@@ -485,19 +485,6 @@ SELECT
 SELECT *
 FROM Information_Schema.Columns;
 
--- visos lenteles turincios daugiau uz pasirinkta skaiciu stulpeliu
-SELECT col.Table_Name,
-    COUNT(*) AS Stulpeliai
-FROM Information_Schema.Columns col
-JOIN Information_Schema.Tables tab
-ON col.Table_Schema = tab.Table_Schema
-AND col.Table_Name = tab.Table_Name
-WHERE col.Table_Schema = 'stud'
-AND tab.Table_Type = 'BASE TABLE'
-GROUP BY col.Table_Name
-HAVING COUNT(*) > 1
-ORDER BY col.Table_Name;
-
 -- information_schema.tables stulpeliu pavadinimai
 SELECT Column_name
 FROM Information_schema.Columns
@@ -534,8 +521,52 @@ WHERE Table_schema = 'pg_catalog'
 AND Table_name = 'pg_roles'
 AND Column_name = 'rolpassword';
 
--- konkreciam naudotojui sarasas stulpeliu, kuriuos
--- jis turi teise naudoti uzklausose
+SELECT Table_schema,
+    Table_name,
+    Privilege_type
+FROM Information_schema.Table_privileges
+WHERE Grantee = 'edbu0238'
+ORDER BY Table_schema, Table_name;
+
+SELECT column_name
+FROM Information_schema.Key_column_usage
+WHERE Table_schema = 'stud'
+AND Table_Name = 'skaitytojas';
+
+-- grazinti lenteles, kurios turi 1 unique arba
+-- primary key constraint
+WITH Lenteles(Pav, Raktas) AS (
+    SELECT B.Table_Name,
+        Position_in_unique_constraint
+    FROM Information_Schema.Key_column_usage A
+    RIGHT OUTER JOIN Information_Schema.Tables B
+    ON (A.Table_Schema = B.Table_Schema
+        AND A.Table_Name = B.Table_Name
+    )
+    WHERE A.Table_Schema = 'stud'
+    GROUP BY B.Table_Name, 
+        Position_in_unique_constraint
+)
+SELECT Pav
+FROM Lenteles
+GROUP BY Pav
+HAVING COUNT(*) = 1;
+
+-- visos lenteles turincios daugiau uz pasirinkta skaiciu stulpeliu
+SELECT col.Table_Name,
+    COUNT(*) AS Stulpeliai
+FROM Information_Schema.Columns col
+JOIN Information_Schema.Tables tab
+ON col.Table_Schema = tab.Table_Schema
+AND col.Table_Name = tab.Table_Name
+WHERE col.Table_Schema = 'stud'
+AND tab.Table_Type = 'BASE TABLE'
+GROUP BY col.Table_Name
+HAVING COUNT(*) > 1
+ORDER BY col.Table_Name;
+
+-- Konkrečiam naudotojui - sąrašas stulpelių, 
+-- kuriuos jis turi teisę naudoti užklausose.
 SELECT Table_schema,
     Table_name,
     Column_name,
@@ -543,8 +574,3 @@ SELECT Table_schema,
 FROM Information_schema.Column_privileges
 WHERE Grantee = 'edbu0238'
 ORDER BY Table_schema, Table_name, Column_name;
-
-SELECT column_name
-FROM Information_schema.Key_column_usage
-WHERE Table_schema = 'stud'
-AND Table_Name = 'skaitytojas';
