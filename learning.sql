@@ -574,3 +574,15 @@ SELECT Table_schema,
 FROM Information_schema.Column_privileges
 WHERE Grantee = 'edbu0238'
 ORDER BY Table_schema, Table_name, Column_name;
+
+SELECT pri.Table_schema,
+    pri.Table_name,
+    pri.Column_name,
+    pri.Privilege_type
+FROM Information_schema.Tables tab
+JOIN Information_schema.Column_privileges pri
+ON pri.Table_schema = tab.Table_schema
+AND pri.Table_name = tab.Table_name
+WHERE Grantee = 'edbu0238'
+AND tab.Table_type = 'BASE TABLE'
+ORDER BY pri.Table_schema, pri.Table_name, pri.Column_name;
