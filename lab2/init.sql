@@ -3,7 +3,7 @@ CREATE TABLE "Clients" (
     "Name" TEXT NOT NULL,
     "Lastname" TEXT NOT NULL,
     "PersonalCode" TEXT NOT NULL,
-    "BirtDate" DATE NOT NULL,
+    "BirthDate" DATE NOT NULL,
     "addressStreet" TEXT NOT NULL,
     "addressCity" TEXT NOT NULL,
     "addressZipCode" TEXT NOT NULL,
@@ -16,7 +16,7 @@ CREATE TABLE "Orders" (
     "OrderDateStart" DATE NOT NULL DEFAULT CURRENT_DATE,
     "OrderDateEnd" DATE,
     "Price" DECIMAL(10, 2) CHECK ("Price" > 0),
-    "Status" TEXT DEFAULT 'pending',
+    "Status" TEXT DEFAULT 'active',
     CONSTRAINT "PK_Orders" PRIMARY KEY ("OrderId"),
     CONSTRAINT "FK_Orders_Clients_ClientId" FOREIGN KEY ("ClientId") REFERENCES "Clients" ("Id") ON DELETE CASCADE
 );
@@ -60,15 +60,15 @@ SELECT
 FROM "Orders" ord
 INNER JOIN "Clients" cli
 ON ord."ClientId" = cli."Id"
-WHERE ord."OrderDateEnd" IS NOT NULL;
+WHERE ord."Status" = 'active';
 
-CREATE VIEW CustomerAges AS
+CREATE VIEW "CustomerAges" AS
 SELECT
     "Id" AS "ClientId",
     "Name",
     "Lastname",
     EXTRACT(YEAR FROM AGE(CURRENT_DATE, "BirthDate")) AS "Age"
-FROM "Clients";
+FROM "Clients" cli;
 
 CREATE MATERIALIZED VIEW "MaterializedCarRevenue" AS
 SELECT
@@ -118,30 +118,38 @@ BEGIN
         WHERE "OrderId" = NEW."OrderId"
     );
 
-    IF car_type = 'Sport' AND customer_age < 22
-    THEN RAISE EXCEPTION 'Sport cars cn only be rented by customers over 22 years old.';
+    IF car_type = 'Sport' AND customer_age < 22 THEN 
+        RAISE EXCEPTION 'Sport cars cn only be rented by customers over 22 years old.';
     END IF;
 
     RETURN NEW;
-END:
+END;
 $$ LANGUAGE plpgsql;
 
 CREATE TRIGGER trigger_check_sport_car_rental_age
-BEFORE INSERT ORD UPDATE ON "OrderCars"
+BEFORE INSERT OR UPDATE ON "OrderCars"
 FOR EACH ROW
 EXECUTE FUNCTION check_sport_car_rental_age();
 
 CREATE OR REPLACE FUNCTION prevent_overlapping_rentals()
 RETURNS TRIGGER AS $$
+DECLARE
+    new_start DATE;
+    new_end DATE;
 BEGIN
+    SELECT "OrderDateStart", "OrderDateEnd"
+    INTO new_start, new_end
+    FROM "Orders"
+    WHERE "OrderId" = NEW."OrderId";
+
     IF EXISTS (
         SELECT 1
         FROM "Orders" ord
         INNER JOIN "OrderCars" orc
         ON ord."OrderId" = orc."OrderId"
         WHERE orc."CarId" = NEW."CarId"
-        AND ord."OrderDateStart" < NEW."OrderDateEnd"
-        AND ord."OrderDateEnd" > New."OrderDateStart"
+        AND ord."OrderDateStart" < new_end
+        AND ord."OrderDateEnd" > new_start
     ) THEN
         RAISE EXCEPTION 'Car is already rented for the selected period.';
     END IF;

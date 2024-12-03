@@ -28,7 +28,6 @@ Table orders {
   order_date_end date [not null]
   price decimal(10, 2)
   status text
-  payment_method text
 }
 
 Table order_cars {
