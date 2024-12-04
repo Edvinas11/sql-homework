@@ -37,11 +37,22 @@ VALUES
 --     (5, 3, 300.00);
 
 -- test overlapping order dates
--- INSERT INTO "Orders" ("ClientId", "OrderDateStart", "OrderDateEnd", "Price", "Status")
--- VALUES
---     (1, '2024-01-01', '2024-01-10', 300.00, 'active'),
---     (2, '2024-01-05', '2024-01-15', 500.00, 'active');
+INSERT INTO "Orders" ("ClientId", "OrderDateStart", "OrderDateEnd", "Price", "Status")
+VALUES
+    (1, '2024-04-04', '2024-04-5', 300.00, 'active'),
+    (2, '2024-04-01', '2024-01-10', 500.00, 'active');
 
--- INSERT INTO "OrderCars" ("OrderId", "CarId", "TotalPrice")
--- VALUES
---     (2, 2, 300.00);
+INSERT INTO "OrderCars" ("OrderId", "CarId", "TotalPrice")
+VALUES
+    (5, 2, 300.00),
+    (6, 2, 500.00);
+
+INSERT INTO "Orders" ("ClientId", "OrderDateStart", "OrderDateEnd", "Price", "Status")
+VALUES
+    (1, '2024-06-01', '2024-06-5', 300.00, 'active'),
+    (2, '2024-06-02', '2024-01-3', 500.00, 'active');
+
+INSERT INTO "OrderCars" ("OrderId", "CarId", "TotalPrice")
+VALUES
+    (7, 2, 300.00),
+    (8, 2, 500.00);

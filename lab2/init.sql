@@ -148,14 +148,24 @@ BEGIN
         INNER JOIN "OrderCars" orc
         ON ord."OrderId" = orc."OrderId"
         WHERE orc."CarId" = NEW."CarId"
-        AND ord."OrderDateStart" < new_end
-        AND ord."OrderDateEnd" > new_start
+        AND (
+            -- new orderio pradzia startuoja tarp egzistuojancio
+            new_start BETWEEN ord."OrderDateStart" AND ord."OrderDateEnd"
+            OR
+            -- new orderio pabaiga startuoja tarp egzistuojancio
+            new_end BETWEEN ord."OrderDateStart" AND ord."OrderDateEnd"
+            OR
+            -- naujas orderis visiskai apima esama orderi
+            ord."OrderDateStart" BETWEEN new_start AND new_end
+        )
     ) THEN
         RAISE EXCEPTION 'Car is already rented for the selected period.';
     END IF;
+
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
+
 
 CREATE TRIGGER trigger_prevent_overlapping_rentals
 BEFORE INSERT OR UPDATE ON "OrderCars"
