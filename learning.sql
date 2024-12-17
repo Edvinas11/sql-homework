@@ -2,6 +2,9 @@
 psql -h <DB serverio vardas> -d <DB vardas> -f <SQL failo vardas>
 psql -h pgsql3.mif -d biblio -f pirmas-laboras-1.sql
 
+psql -h pgsql3.mif -d studentu 
+ssh -L 5432:pgsql3.mif:5432 edbu0238@uosis.mif.vu.lt
+
 ------- SELECT -------
 SELECT * 
 FROM stud.Autorius;
